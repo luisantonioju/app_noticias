@@ -1,5 +1,7 @@
 import 'package:app_noticias/detalhe_noticia_page.dart';
+import 'package:app_noticias/models/categoria.dart';
 import 'package:app_noticias/models/noticia.dart';
+import 'package:app_noticias/services/categoria_service.dart';
 import 'package:app_noticias/services/noticia_service.dart';
 import 'package:app_noticias/sobre_page.dart';
 import 'package:flutter/material.dart';
@@ -15,19 +17,27 @@ class _HomePageState extends State<HomePage> {
   final NoticiaService _noticiaService = NoticiaService();
   late Future<List<Noticia>> _listaNoticias;
 
+  final CategoriaService _categoriaService = CategoriaService();
+  List<Categoria> _listaCategorias = [];
+  final String _categoriaSelecionada = 'Todas';
+
   @override
   void initState() {
     super.initState();
     _listaNoticias = _noticiaService.getNoticias();
+    carregarCategorias();
   }
 
-  static final List<String> categorias = [
-    'Todas',
-    'Tecnologia',
-    'Educação',
-    'Economia',
-    'Esporte',
-  ];
+  Future<void> carregarCategorias() async {
+    try {
+      final categorias = await _categoriaService.getCategorias();
+      setState(() {
+        _listaCategorias = categorias;
+      });
+    } catch (e) {
+      debugPrint('Erro ao carregar a categorias: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +55,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+
       drawer: Drawer(
         child: ListView(
           children: [
@@ -54,13 +65,15 @@ class _HomePageState extends State<HomePage> {
               ),
               child: Image.asset('assets/img/logotipo.png'),
             ),
+
             ListTile(
               leading: const Icon(Icons.home),
-              title: const Text('Inicio'),
+              title: const Text('Início'),
               onTap: () => Navigator.pop(context),
             ),
+
             ListTile(
-              leading: const Icon(Icons.info_outline),
+              leading: const Icon(Icons.info),
               title: const Text('Sobre'),
               onTap: () {
                 Navigator.pop(context);
@@ -70,18 +83,27 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+
+            //Sobre
           ],
         ),
       ),
+
       body: Column(
         children: [
           SizedBox(
             height: 45,
-            child: ListView(
+            child: ListView.builder(
+              itemCount: _listaCategorias.length + 1,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              children: categorias.map((categoria) {
-                final selecionada = categoria == "Todas";
+              itemBuilder: (context, index) {
+                final categoria = index == 0
+                    ? 'Todas'
+                    : _listaCategorias[index - 1].nome;
+
+                final selecionada = _categoriaSelecionada == categoria;
+
                 return Container(
                   margin: const EdgeInsets.only(right: 8),
                   padding: const EdgeInsets.symmetric(
@@ -103,7 +125,7 @@ class _HomePageState extends State<HomePage> {
                     style: const TextStyle(fontSize: 12),
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
           Expanded(
