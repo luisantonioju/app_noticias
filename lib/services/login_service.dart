@@ -13,6 +13,7 @@ class LoginServices {
         headers: {'Accept': 'application/json'},
         body: {'email': email, 'password': password},
       );
+
       if (resposta.statusCode == 200) {
         final dados = jsonDecode(resposta.body);
 
@@ -22,14 +23,17 @@ class LoginServices {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
         await prefs.setString('nome', nome);
+
+        return nome;
       }
 
-      if (resposta.statusCode == 401 || resposta.statusCode == 432) {
-        throw Exception('E-mail ou senha inválidos');
+      if (resposta.statusCode == 401 || resposta.statusCode == 422) {
+        throw 'E-mail ou Senha Inválidos';
       }
     } catch (e) {
-      throw Exception('Não conectou erro: $e');
+      throw Exception('$e');
     }
+
     return '';
   }
 
